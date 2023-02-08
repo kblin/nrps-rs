@@ -1,0 +1,23 @@
+[package]
+name = "nrps-rs"
+description = "A reimplementation of NRPSPredictor2 in Rust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kai Blin <kblin@biosustain.dtu.dk>"]
+repository = "https://github.com/kblin/nrps-rs.git"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.1.4", features = ["derive"] }
+phf = { version = "0.11.1", features = ["macros"] }
+walkdir = "2.3.2"
+
+[dev-dependencies]
+assert_approx_eq = "1.1.0"
+rstest = "0.16.0"
+
+[profile.release]
+debug = true
