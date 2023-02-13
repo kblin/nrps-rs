@@ -1,6 +1,7 @@
 // License: GNU Affero General Public License v3 or later
 // A copy of GNU AGPL v3 should have been included in this software package in LICENSE.txt.
 
+pub mod config;
 pub mod encodings;
 pub mod errors;
 pub mod predictors;
@@ -14,11 +15,11 @@ use errors::NrpsError;
 use predictors::predictions::{ADomain, PredictionCategory};
 use predictors::{load_models, Predictor};
 
-pub fn run(signature_file: PathBuf, model_dir: PathBuf, count: usize) {
-    let mut domains = parse_domains(signature_file).unwrap();
-    let models = load_models(model_dir).unwrap();
+pub fn run(config: config::Config, signature_file: PathBuf, count: usize) -> Result<(), NrpsError> {
+    let mut domains = parse_domains(signature_file)?;
+    let models = load_models(&config.model_dir)?;
     let predictor = Predictor { models };
-    predictor.predict(&mut domains).unwrap();
+    predictor.predict(&mut domains)?;
 
     let categories = &[
         PredictionCategory::ThreeCluster,
@@ -42,7 +43,9 @@ pub fn run(signature_file: PathBuf, model_dir: PathBuf, count: usize) {
             let mut best = domain
                 .get_best_n(&cat, count)
                 .iter()
-                .fold("".to_string(), |acc, new| format!("{acc}|{}", new.name))
+                .fold("".to_string(), |acc, new| {
+                    format!("{acc}|{}({:.2})", new.name, new.score)
+                })
                 .trim_matches('|')
                 .to_string();
             if best == "" {
@@ -52,10 +55,16 @@ pub fn run(signature_file: PathBuf, model_dir: PathBuf, count: usize) {
         }
         println!("{}\t{}", domain.name, best_predictions.join("\t"));
     }
+
+    Ok(())
 }
 
 pub fn parse_domains(signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError> {
     let mut domains = Vec::new();
+
+    if !signature_file.exists() {
+        eprintln!("{} doesn't exist", signature_file.display());
+    }
 
     let handle = File::open(signature_file)?;
     let reader = BufReader::new(handle);

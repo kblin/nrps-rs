@@ -35,7 +35,7 @@ impl Predictor {
     }
 }
 
-pub fn load_models(model_dir: PathBuf) -> Result<Vec<SVMlightModel>, NrpsError> {
+pub fn load_models(model_dir: &PathBuf) -> Result<Vec<SVMlightModel>, NrpsError> {
     let mut models = Vec::with_capacity(1000);
 
     for category_dir_res in WalkDir::new(model_dir)
@@ -62,6 +62,13 @@ pub fn load_models(model_dir: PathBuf) -> Result<Vec<SVMlightModel>, NrpsError> 
             .sort_by_file_name()
         {
             let model_file = model_file_res?.path().to_path_buf();
+            if let Some(ext) = model_file.extension() {
+                if ext != "mdl" {
+                    continue;
+                }
+            } else {
+                continue;
+            }
             let info = extract_name(&model_file, FeatureEncoding::Wold);
             let handle = File::open(&model_file)?;
             models.push(SVMlightModel::from_handle(
