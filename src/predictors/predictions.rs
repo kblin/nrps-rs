@@ -9,6 +9,7 @@ pub enum PredictionCategory {
     LargeCluster,
     SmallCluster,
     Single,
+    Stachelhaus,
     LegacyThreeCluster,
     LegacyThreeClusterFungal,
     LegacyLargeCluster,

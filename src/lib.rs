@@ -13,10 +13,13 @@ use std::path::PathBuf;
 
 use errors::NrpsError;
 use predictors::predictions::{ADomain, PredictionCategory};
+use predictors::stachelhaus::predict_stachelhaus;
 use predictors::{load_models, Predictor};
 
 pub fn run(config: config::Config, signature_file: PathBuf, count: usize) -> Result<(), NrpsError> {
     let mut domains = parse_domains(signature_file)?;
+    predict_stachelhaus(&config, &mut domains)?;
+
     let models = load_models(&config.model_dir)?;
     let predictor = Predictor { models };
     predictor.predict(&mut domains)?;
@@ -26,6 +29,7 @@ pub fn run(config: config::Config, signature_file: PathBuf, count: usize) -> Res
         PredictionCategory::LargeCluster,
         PredictionCategory::SmallCluster,
         PredictionCategory::Single,
+        PredictionCategory::Stachelhaus,
         PredictionCategory::LegacyThreeCluster,
         PredictionCategory::LegacyLargeCluster,
         PredictionCategory::LegacySmallCluster,

@@ -1,6 +1,7 @@
 // License: GNU Affero General Public License v3 or later
 // A copy of GNU AGPL v3 should have been included in this software package in LICENSE.txt.
 pub mod predictions;
+pub mod stachelhaus;
 
 use std::fs::File;
 use std::path::PathBuf;
