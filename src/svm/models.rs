@@ -72,12 +72,15 @@ impl SVMlightModel {
         self.predict(&fvec)
     }
 
-    pub fn from_handle(
-        handle: impl Read,
+    pub fn from_handle<R>(
+        handle: R,
         name: String,
         category: PredictionCategory,
         encoding: FeatureEncoding,
-    ) -> Result<Self, NrpsError> {
+    ) -> Result<Self, NrpsError>
+    where
+        R: Read,
+    {
         let mut line_iter = io::BufReader::new(handle).lines();
         line_iter.next(); // skip
 
