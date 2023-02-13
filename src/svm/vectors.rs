@@ -83,7 +83,10 @@ impl Vector for SupportVector {
 
 fn dot(a: &Vec<f64>, b: &Vec<f64>) -> Result<f64, NrpsError> {
     if a.len() != b.len() {
-        return Err(NrpsError::DimensionMismatch((a.len(), b.len())));
+        return Err(NrpsError::DimensionMismatch {
+            first: a.len(),
+            second: b.len(),
+        });
     }
     Ok(a.iter()
         .zip(b.iter())
@@ -92,7 +95,10 @@ fn dot(a: &Vec<f64>, b: &Vec<f64>) -> Result<f64, NrpsError> {
 
 fn element_subtract(a: &Vec<f64>, b: &Vec<f64>) -> Result<Vec<f64>, NrpsError> {
     if a.len() != b.len() {
-        return Err(NrpsError::DimensionMismatch((a.len(), b.len())));
+        return Err(NrpsError::DimensionMismatch {
+            first: a.len(),
+            second: b.len(),
+        });
     }
     Ok(a.iter()
         .zip(b.iter())
