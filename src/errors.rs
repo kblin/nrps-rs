@@ -12,6 +12,8 @@ use walkdir;
 pub enum NrpsError {
     #[error("Error parsing config")]
     ConfigError(#[from] toml::de::Error),
+    #[error("Invalid result count: `{0}`")]
+    CountError(usize),
     #[error("Dimension mismatch: `{first}` vs. `{second}`")]
     DimensionMismatch { first: usize, second: usize },
     #[error("Dir error")]

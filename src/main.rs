@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 use nrps_rs::config::{parse_config, Config};
-use nrps_rs::run;
+use nrps_rs::{print_results, run};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -33,8 +33,16 @@ fn main() {
         config_file.push("nrps.toml");
     }
 
+    let count: usize;
+    if cli.count >= 1 {
+        count = cli.count;
+    } else {
+        eprintln!("Can't use count of {}, using 1 instead.", cli.count);
+        count = 1;
+    }
+
     eprintln!("Running on {}", cli.signatures.display());
-    eprintln!("Printing the best {} hit(s)", cli.count);
+    eprintln!("Printing the best {} hit(s)", count);
     let config: Config;
 
     if config_file.exists() {
@@ -46,7 +54,8 @@ fn main() {
     }
     eprintln!("Model dir is {}", &config.model_dir.display());
 
-    run(config, cli.signatures, cli.count).unwrap();
+    let domains = run(&config, cli.signatures).unwrap();
+    print_results(&domains, count).unwrap();
 }
 
 #[cfg(test)]

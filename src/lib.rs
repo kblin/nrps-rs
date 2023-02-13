@@ -16,7 +16,7 @@ use predictors::predictions::{ADomain, PredictionCategory};
 use predictors::stachelhaus::predict_stachelhaus;
 use predictors::{load_models, Predictor};
 
-pub fn run(config: config::Config, signature_file: PathBuf, count: usize) -> Result<(), NrpsError> {
+pub fn run(config: &config::Config, signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError> {
     let mut domains = parse_domains(signature_file)?;
     predict_stachelhaus(&config, &mut domains)?;
 
@@ -24,7 +24,15 @@ pub fn run(config: config::Config, signature_file: PathBuf, count: usize) -> Res
     let predictor = Predictor { models };
     predictor.predict(&mut domains)?;
 
-    let categories = &[
+    Ok(domains)
+}
+
+pub fn print_results(domains: &Vec<ADomain>, count: usize) -> Result<(), NrpsError> {
+    if count < 1 {
+        return Err(NrpsError::CountError(count));
+    }
+
+    let categories = Vec::from([
         PredictionCategory::ThreeCluster,
         PredictionCategory::LargeCluster,
         PredictionCategory::SmallCluster,
@@ -35,7 +43,7 @@ pub fn run(config: config::Config, signature_file: PathBuf, count: usize) -> Res
         PredictionCategory::LegacySmallCluster,
         PredictionCategory::LegacySingle,
         PredictionCategory::LegacyThreeClusterFungal,
-    ];
+    ]);
 
     let cat_strings: Vec<String> = categories.iter().map(|c| format!("{c:?}")).collect();
 
