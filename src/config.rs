@@ -23,6 +23,12 @@ pub struct Config {
     pub stachelhaus_signatures: PathBuf,
 }
 
+fn set_stach_from_model_dir(model_dir: &PathBuf) -> PathBuf {
+    let mut stachelhaus_signatures = model_dir.clone();
+    stachelhaus_signatures.push("signatures.tsv");
+    stachelhaus_signatures
+}
+
 impl From<ParsedConfig> for Config {
     fn from(item: ParsedConfig) -> Self {
         let mut model_dir: PathBuf;
@@ -34,12 +40,11 @@ impl From<ParsedConfig> for Config {
             model_dir.push("models");
         }
 
-        let mut stachelhaus_signatures: PathBuf;
+        let stachelhaus_signatures: PathBuf;
         if let Some(file_name) = item.stachelhaus_signatures {
             stachelhaus_signatures = PathBuf::from(file_name);
         } else {
-            stachelhaus_signatures = model_dir.clone();
-            stachelhaus_signatures.push("signatures.tsv");
+            stachelhaus_signatures = set_stach_from_model_dir(&model_dir);
         }
 
         Config {
@@ -49,14 +54,26 @@ impl From<ParsedConfig> for Config {
     }
 }
 
-pub fn parse_config<R>(mut reader: R) -> Result<Config, NrpsError>
+pub fn parse_config<R>(
+    mut reader: R,
+    model_dir: Option<PathBuf>,
+    stachelhaus_signatures: Option<PathBuf>,
+) -> Result<Config, NrpsError>
 where
     R: Read,
 {
     let mut raw_config = String::new();
     reader.read_to_string(&mut raw_config)?;
     let parsed_config: ParsedConfig = toml::from_str(&raw_config)?;
-    Ok(parsed_config.into())
+    let mut config = Config::from(parsed_config);
+    if let Some(md) = model_dir {
+        config.model_dir = md;
+        config.stachelhaus_signatures = set_stach_from_model_dir(&config.model_dir);
+    }
+    if let Some(stach) = stachelhaus_signatures {
+        config.stachelhaus_signatures = stach;
+    }
+    Ok(config)
 }
 
 #[cfg(test)]
@@ -69,7 +86,7 @@ mod tests {
             model_dir: PathBuf::from("/foo"),
             stachelhaus_signatures: PathBuf::from("/foo/signatures.tsv"),
         };
-        let got = parse_config("model_dir = '/foo'".as_bytes()).unwrap();
+        let got = parse_config("model_dir = '/foo'".as_bytes(), None, None).unwrap();
         assert_eq!(expected, got);
     }
 
@@ -85,7 +102,7 @@ mod tests {
             model_dir,
             stachelhaus_signatures: stach,
         };
-        let got = parse_config("".as_bytes()).unwrap();
+        let got = parse_config("".as_bytes(), None, None).unwrap();
         assert_eq!(expected, got);
     }
 
@@ -100,8 +117,60 @@ mod tests {
             model_dir,
             stachelhaus_signatures: stach,
         };
-        let got =
-            parse_config("stachelhaus_signatures = '/foo/signatures.tsv'".as_bytes()).unwrap();
+        let got = parse_config(
+            "stachelhaus_signatures = '/foo/signatures.tsv'".as_bytes(),
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_override_model_dir() {
+        let model_dir = PathBuf::from("/foo");
+        let mut stach = model_dir.clone();
+        stach.push("signatures.tsv");
+
+        let expected = Config {
+            model_dir: model_dir.clone(),
+            stachelhaus_signatures: stach,
+        };
+
+        let got = parse_config("".as_bytes(), Some(model_dir), None).unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_override_stach() {
+        let model_dir = PathBuf::from("/foo");
+        let stach = PathBuf::from("/bar/signatures.tsv");
+
+        let expected = Config {
+            model_dir: model_dir.clone(),
+            stachelhaus_signatures: stach.clone(),
+        };
+
+        let got = parse_config("model_dir = '/foo'".as_bytes(), None, Some(stach)).unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_override_both() {
+        let model_dir = PathBuf::from("/foo");
+        let stach = PathBuf::from("/bar/signatures.tsv");
+
+        let expected = Config {
+            model_dir: model_dir.clone(),
+            stachelhaus_signatures: stach.clone(),
+        };
+
+        let got = parse_config(
+            "stachelhaus_signatures = '/baz/signatures.tsv'".as_bytes(),
+            Some(model_dir),
+            Some(stach),
+        )
+        .unwrap();
         assert_eq!(expected, got);
     }
 }

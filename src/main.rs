@@ -27,6 +27,14 @@ struct Cli {
     /// Sets a custom config file
     #[arg(long, value_name = "FILE")]
     config: Option<PathBuf>,
+
+    /// Overrides the config file settings for the Stachelhaus signature file
+    #[arg(short, long, value_name = "FILE")]
+    stachelhaus_signatures: Option<PathBuf>,
+
+    /// Overrides the config file settings for the SVM model dir
+    #[arg(short, long, value_name = "DIR")]
+    model_dir: Option<PathBuf>,
 }
 
 fn main() {
@@ -54,12 +62,21 @@ fn main() {
 
     if config_file.exists() {
         eprintln!("Using config from {}", config_file.display());
-        config = parse_config(File::open(config_file).unwrap()).unwrap();
+        config = parse_config(
+            File::open(config_file).unwrap(),
+            cli.model_dir,
+            cli.stachelhaus_signatures,
+        )
+        .unwrap();
     } else {
         eprintln!("Using default config");
-        config = parse_config("".as_bytes()).unwrap();
+        config = parse_config("".as_bytes(), cli.model_dir, cli.stachelhaus_signatures).unwrap();
     }
     eprintln!("Model dir is {}", &config.model_dir.display());
+    eprintln!(
+        "Stachelhaus signatures from {}",
+        &config.stachelhaus_signatures.display()
+    );
 
     let domains = run(&config, cli.signatures).unwrap();
     print_results(&domains, count, cli.fungal).unwrap();
