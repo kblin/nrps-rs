@@ -13,11 +13,14 @@ use nrps_rs::{print_results, run};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    /// Signature file to run predictions on
     signatures: PathBuf,
 
+    /// Number of results to return per category
     #[arg(short, long, default_value_t = 1)]
     count: usize,
 
+    /// Sets a custom config file
     #[arg(long, value_name = "FILE")]
     config: Option<PathBuf>,
 }
