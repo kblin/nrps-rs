@@ -27,12 +27,12 @@ pub fn run(config: &config::Config, signature_file: PathBuf) -> Result<Vec<ADoma
     Ok(domains)
 }
 
-pub fn print_results(domains: &Vec<ADomain>, count: usize) -> Result<(), NrpsError> {
+pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Result<(), NrpsError> {
     if count < 1 {
         return Err(NrpsError::CountError(count));
     }
 
-    let categories = Vec::from([
+    let mut categories = Vec::from([
         PredictionCategory::ThreeCluster,
         PredictionCategory::LargeCluster,
         PredictionCategory::SmallCluster,
@@ -42,8 +42,11 @@ pub fn print_results(domains: &Vec<ADomain>, count: usize) -> Result<(), NrpsErr
         PredictionCategory::LegacyLargeCluster,
         PredictionCategory::LegacySmallCluster,
         PredictionCategory::LegacySingle,
-        PredictionCategory::LegacyThreeClusterFungal,
     ]);
+
+    if fungal {
+        categories.push(PredictionCategory::LegacyThreeClusterFungal);
+    }
 
     let cat_strings: Vec<String> = categories.iter().map(|c| format!("{c:?}")).collect();
 

@@ -20,6 +20,10 @@ struct Cli {
     #[arg(short, long, default_value_t = 1)]
     count: usize,
 
+    /// Runs the NRPSPredictor2 fungal models
+    #[arg(long, default_value_t = false)]
+    fungal: bool,
+
     /// Sets a custom config file
     #[arg(long, value_name = "FILE")]
     config: Option<PathBuf>,
@@ -58,7 +62,7 @@ fn main() {
     eprintln!("Model dir is {}", &config.model_dir.display());
 
     let domains = run(&config, cli.signatures).unwrap();
-    print_results(&domains, count).unwrap();
+    print_results(&domains, count, cli.fungal).unwrap();
 }
 
 #[cfg(test)]
