@@ -78,7 +78,8 @@ pub fn parse_domains(signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError>
     let mut domains = Vec::new();
 
     if !signature_file.exists() {
-        eprintln!("{} doesn't exist", signature_file.display());
+        let err = format!("{} doesn't exist", signature_file.display());
+        return Err(NrpsError::SignatureFileError(err));
     }
 
     let handle = File::open(signature_file)?;

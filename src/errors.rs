@@ -28,4 +28,6 @@ pub enum NrpsError {
     Io(#[from] io::Error),
     #[error("Signature error `{0}`")]
     SignatureError(String),
+    #[error("Stachelhaus signature file error `{0}`")]
+    SignatureFileError(String),
 }
