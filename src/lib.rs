@@ -75,8 +75,6 @@ pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Resu
 }
 
 pub fn parse_domains(signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError> {
-    let mut domains = Vec::new();
-
     if !signature_file.exists() {
         let err = format!("{} doesn't exist", signature_file.display());
         return Err(NrpsError::SignatureFileError(err));
@@ -85,21 +83,68 @@ pub fn parse_domains(signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError>
     let handle = File::open(signature_file)?;
     let reader = BufReader::new(handle);
 
+    parse_domains_from_reader(reader)
+}
+
+fn parse_domains_from_reader<R>(reader: R) -> Result<Vec<ADomain>, NrpsError>
+where
+    R: BufRead,
+{
+    let mut domains = Vec::new();
+
     for line_res in reader.lines() {
         let line = line_res?.trim().to_string();
         if line == "" {
             continue;
         }
         let parts: Vec<&str> = line.split("\t").collect();
-        if parts.len() != 2 {
+        if parts.len() < 2 {
             return Err(NrpsError::SignatureError(line));
         }
         if parts[0].len() != 34 {
             return Err(NrpsError::SignatureError(line));
         }
 
-        domains.push(ADomain::new(parts[1].to_string(), parts[0].to_string()));
+        let name: String;
+        match parts.len() {
+            2 => name = parts[1].to_string(),
+            _ => name = format!("{}_{}", parts[2], parts[1]),
+        }
+
+        domains.push(ADomain::new(name, parts[0].to_string()));
     }
 
     Ok(domains)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_domains() {
+        let two_parts = BufReader::new("LDASFDASLFEMYLLTGGDRNMYGPTEATMCATW\tbpsA_A1".as_bytes());
+        let three_parts =
+            BufReader::new("LEPAFDISLFEVHLLTGGDRHLYGPTEATLCATW\tHpg\tCAC48361.1.A1".as_bytes());
+        let too_short = BufReader::new("LDASFDASLFEMYLLTGGDRNMYGPTEATMCATW".as_bytes());
+
+        let expected_two = Vec::from([ADomain::new(
+            "bpsA_A1".to_string(),
+            "LDASFDASLFEMYLLTGGDRNMYGPTEATMCATW".to_string(),
+        )]);
+
+        let expected_three = Vec::from([ADomain::new(
+            "CAC48361.1.A1_Hpg".to_string(),
+            "LEPAFDISLFEVHLLTGGDRHLYGPTEATLCATW".to_string(),
+        )]);
+
+        let got_two = parse_domains_from_reader(two_parts).unwrap();
+        assert_eq!(expected_two, got_two);
+
+        let got_three = parse_domains_from_reader(three_parts).unwrap();
+        assert_eq!(expected_three, got_three);
+
+        let got_error = parse_domains_from_reader(too_short);
+        assert!(got_error.is_err());
+    }
 }
