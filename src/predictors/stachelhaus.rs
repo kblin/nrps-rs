@@ -84,7 +84,7 @@ fn calculate_score(
 ) -> f64 {
     let primary_score = similarity(primary_matches, primary_len);
     let penalty = 1.0 - similarity(secondary_matches, secondary_len);
-    primary_score - penalty
+    primary_score - (penalty / 10.0)
 }
 
 fn similarity(matches: usize, len: usize) -> f64 {
@@ -154,6 +154,8 @@ fn hamming_dist(a: &String, b: &String) -> usize {
 mod tests {
     use super::*;
 
+    use assert_approx_eq::assert_approx_eq;
+
     #[test]
     fn test_extract_aa10() {
         let expected = "DMVICGCAAK".to_string();
@@ -176,5 +178,22 @@ mod tests {
         assert_eq!(hamming_dist(&a, &a), 0);
         assert_eq!(hamming_dist(&a, &b), 1);
         assert_eq!(hamming_dist(&a, &c), 4);
+    }
+
+    #[test]
+    fn test_calculate_score() {
+        let test_cases: &[((usize, usize, usize, usize), f64)] = &[
+            ((10, 10, 10, 10), 1.0),
+            ((10, 10, 9, 10), 0.99),
+            ((10, 10, 5, 10), 0.95),
+        ];
+        for case in test_cases.iter() {
+            let values = case.0;
+            let expected = case.1;
+            assert_approx_eq!(
+                expected,
+                calculate_score(values.0, values.1, values.2, values.3)
+            );
+        }
     }
 }
