@@ -1,7 +1,8 @@
 // License: GNU Affero General Public License v3 or later
 // A copy of GNU AGPL v3 should have been included in this software package in LICENSE.txt.
 
-use std::{cmp::min, collections::HashMap};
+use std::cmp::min;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum PredictionCategory {
@@ -23,7 +24,26 @@ pub struct Prediction {
     pub score: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct StachPrediction {
+    pub name: String,
+    pub aa10_score: f64,
+    pub aa10_sig: String,
+    pub aa34_score: f64,
+    pub aa34_sig: String,
+}
+impl PartialOrd for StachPrediction {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if let Some(aa10_ord) = self.aa10_score.partial_cmp(&other.aa10_score) {
+            if let Some(aa34_ord) = self.aa34_score.partial_cmp(&other.aa34_score) {
+                return Some(aa10_ord.then(aa34_ord));
+            }
+        }
+        None
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct PredictionList {
     predictions: Vec<Prediction>,
 }
@@ -63,10 +83,84 @@ impl PredictionList {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct StachPredictionList {
+    predictions: Vec<StachPrediction>,
+}
+
+impl StachPredictionList {
+    pub fn new() -> Self {
+        let predictions = Vec::with_capacity(5);
+        StachPredictionList { predictions }
+    }
+
+    pub fn add(&mut self, prediction: StachPrediction) {
+        self.predictions.push(prediction);
+        self.predictions.sort_by(|a, b| a.partial_cmp(&b).unwrap());
+        self.predictions.reverse()
+    }
+
+    pub fn get_best_n(&self, count: usize) -> Vec<StachPrediction> {
+        let mut predictions = Vec::with_capacity(count);
+        let slice_end = min(count, self.predictions.len());
+        if self.predictions.len() == 0 {
+            return predictions;
+        }
+
+        predictions.extend_from_slice(&self.predictions[0..slice_end]);
+        for pred in self.predictions[slice_end..].iter() {
+            if pred.aa10_score < predictions[count - 1].aa10_score {
+                break;
+            }
+            predictions.push(pred.clone())
+        }
+
+        predictions
+    }
+
+    pub fn get_best(&self) -> Vec<StachPrediction> {
+        self.get_best_n(1)
+    }
+
+    pub fn len(&self) -> usize {
+        self.predictions.len()
+    }
+
+    pub fn to_table(&self) -> String {
+        let mut substrates: Vec<String> = Vec::with_capacity(self.len());
+        let mut aa10_scores: Vec<f64> = Vec::with_capacity(self.len());
+        let mut aa34_scores: Vec<f64> = Vec::with_capacity(self.len());
+
+        for pred in self.get_best().iter() {
+            substrates.push(pred.name.clone());
+            aa10_scores.push(pred.aa10_score);
+            aa34_scores.push(pred.aa34_score);
+        }
+
+        let substrate_string = substrates.join("|");
+        let aa10_string = aa10_scores
+            .iter()
+            .map(|a| format!("{a:.2}"))
+            .fold(String::from(""), |acc, new| format!("{acc}|{new}"))
+            .trim_matches('|')
+            .to_string();
+        let aa34_string = aa34_scores
+            .iter()
+            .map(|a| format!("{a:.2}"))
+            .fold(String::from(""), |acc, new| format!("{acc}|{new}"))
+            .trim_matches('|')
+            .to_string();
+
+        format!("{substrate_string}\t{aa10_string}\t{aa34_string}")
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct ADomain {
     pub name: String,
     pub aa34: String,
     predictions: HashMap<PredictionCategory, PredictionList>,
+    pub stach_predictions: StachPredictionList,
 }
 
 impl ADomain {
@@ -75,6 +169,7 @@ impl ADomain {
             name,
             aa34,
             predictions: HashMap::new(),
+            stach_predictions: StachPredictionList::new(),
         }
     }
 

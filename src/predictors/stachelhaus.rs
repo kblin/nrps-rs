@@ -7,36 +7,94 @@ use std::io::{BufRead, BufReader, Read};
 use crate::config::Config;
 use crate::errors::NrpsError;
 
-use super::predictions::{ADomain, Prediction, PredictionCategory};
+use super::predictions::{
+    ADomain, Prediction, PredictionCategory, PredictionList, StachPrediction, StachPredictionList,
+};
 
 pub fn predict_stachelhaus(config: &Config, domains: &mut Vec<ADomain>) -> Result<(), NrpsError> {
     let signatures = parse_stachelhaus_sigs(config)?;
+    predict(domains, signatures)
+}
+
+fn predict(
+    domains: &mut Vec<ADomain>,
+    signatures: Vec<StachelhausSignature>,
+) -> Result<(), NrpsError> {
     for domain in domains.iter_mut() {
         let aa10 = extract_aa10(&domain.aa34)?;
-        let mut max_matches: usize = 6; // Don't bother showing hits < 7 matches
-        let mut pred_opt: Option<Prediction> = None;
+        let mut max_aa10_matches: usize = 6; // Don't bother showing hits < 7 matches
+        let mut max_aa34_matches: usize = max_aa10_matches;
+        let mut predictions = PredictionList::new();
+        let mut stach_predictions = StachPredictionList::new();
 
         for sig in signatures.iter() {
-            let matches = aa10.len() - hamming_dist(&aa10, &sig.aa10);
-            if matches > max_matches {
-                max_matches = matches;
-                pred_opt = Some(Prediction {
+            let aa10_matches = aa10.len() - hamming_dist(&aa10, &sig.aa10);
+            let aa34_matches = domain.aa34.len() - hamming_dist(&domain.aa34, &sig.aa34);
+            if aa10_matches > max_aa10_matches {
+                max_aa10_matches = aa10_matches;
+                predictions.add(Prediction {
                     name: sig.winner.clone(),
-                    score: matches as f64 / aa10.len() as f64,
+                    score: calculate_score(
+                        aa10_matches,
+                        aa10.len(),
+                        aa34_matches,
+                        domain.aa34.len(),
+                    ),
+                });
+                stach_predictions.add(StachPrediction {
+                    name: sig.winner.clone(),
+                    aa10_score: similarity(aa10_matches, aa10.len()),
+                    aa10_sig: sig.aa10.clone(),
+                    aa34_score: similarity(aa34_matches, sig.aa34.len()),
+                    aa34_sig: sig.aa34.clone(),
+                })
+            } else if aa10_matches == max_aa10_matches && aa34_matches > max_aa34_matches {
+                max_aa34_matches = aa34_matches;
+                predictions.add(Prediction {
+                    name: sig.winner.clone(),
+                    score: calculate_score(
+                        aa10_matches,
+                        aa10.len(),
+                        aa34_matches,
+                        domain.aa34.len(),
+                    ),
+                });
+                stach_predictions.add(StachPrediction {
+                    name: sig.winner.clone(),
+                    aa10_score: similarity(aa10_matches, aa10.len()),
+                    aa10_sig: sig.aa10.clone(),
+                    aa34_score: similarity(aa34_matches, sig.aa34.len()),
+                    aa34_sig: sig.aa34.clone(),
                 })
             }
         }
-        if let Some(pred) = pred_opt {
-            domain.add(PredictionCategory::Stachelhaus, pred)
+        for pred in predictions.get_best().iter() {
+            domain.add(PredictionCategory::Stachelhaus, pred.clone());
         }
+        domain.stach_predictions = stach_predictions;
     }
     Ok(())
+}
+
+fn calculate_score(
+    primary_matches: usize,
+    primary_len: usize,
+    secondary_matches: usize,
+    secondary_len: usize,
+) -> f64 {
+    let primary_score = similarity(primary_matches, primary_len);
+    let penalty = 1.0 - similarity(secondary_matches, secondary_len);
+    primary_score - penalty
+}
+
+fn similarity(matches: usize, len: usize) -> f64 {
+    matches as f64 / len as f64
 }
 
 #[derive(Debug)]
 struct StachelhausSignature {
     pub aa10: String,
-    // pub aa34: String,
+    pub aa34: String,
     // pub all: String,
     pub winner: String,
     // pub ids: String,
@@ -64,6 +122,7 @@ where
         }
         let sig = StachelhausSignature {
             aa10: parts[0].to_string(),
+            aa34: parts[1].to_string(),
             winner: parts[3].to_string(),
         };
         signatures.push(sig);

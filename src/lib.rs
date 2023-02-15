@@ -50,7 +50,10 @@ pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Resu
 
     let cat_strings: Vec<String> = categories.iter().map(|c| format!("{c:?}")).collect();
 
-    println!("Name\t{}", cat_strings.join("\t"));
+    println!(
+        "Name\tStach\tAA10 score\tAA34 score\t{}",
+        cat_strings.join("\t")
+    );
 
     for domain in domains.iter() {
         let mut best_predictions: Vec<String> = Vec::new();
@@ -68,7 +71,12 @@ pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Resu
             }
             best_predictions.push(best)
         }
-        println!("{}\t{}", domain.name, best_predictions.join("\t"));
+        println!(
+            "{}\t{}\t{}",
+            domain.name,
+            domain.stach_predictions.to_table(),
+            best_predictions.join("\t")
+        );
     }
 
     Ok(())
