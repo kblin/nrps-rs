@@ -12,41 +12,30 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 use errors::NrpsError;
-use predictors::predictions::{ADomain, PredictionCategory};
+use predictors::predictions::ADomain;
 use predictors::stachelhaus::predict_stachelhaus;
 use predictors::{load_models, Predictor};
 
 pub fn run(config: &config::Config, signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError> {
     let mut domains = parse_domains(signature_file)?;
-    predict_stachelhaus(&config, &mut domains)?;
 
-    let models = load_models(&config.model_dir)?;
+    if !config.skip_stachelhaus {
+        predict_stachelhaus(&config, &mut domains)?;
+    }
+
+    let models = load_models(&config.model_dir())?;
     let predictor = Predictor { models };
     predictor.predict(&mut domains)?;
 
     Ok(domains)
 }
 
-pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Result<(), NrpsError> {
-    if count < 1 {
-        return Err(NrpsError::CountError(count));
+pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<(), NrpsError> {
+    if config.count < 1 {
+        return Err(NrpsError::CountError(config.count));
     }
 
-    let mut categories = Vec::from([
-        PredictionCategory::ThreeCluster,
-        PredictionCategory::LargeCluster,
-        PredictionCategory::SmallCluster,
-        PredictionCategory::Single,
-        PredictionCategory::Stachelhaus,
-        PredictionCategory::LegacyThreeCluster,
-        PredictionCategory::LegacyLargeCluster,
-        PredictionCategory::LegacySmallCluster,
-        PredictionCategory::LegacySingle,
-    ]);
-
-    if fungal {
-        categories.push(PredictionCategory::LegacyThreeClusterFungal);
-    }
+    let categories = config.categories();
 
     let cat_strings: Vec<String> = categories.iter().map(|c| format!("{c:?}")).collect();
 
@@ -59,7 +48,7 @@ pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Resu
         let mut best_predictions: Vec<String> = Vec::new();
         for cat in categories.iter() {
             let mut best = domain
-                .get_best_n(&cat, count)
+                .get_best_n(&cat, config.count)
                 .iter()
                 .fold("".to_string(), |acc, new| {
                     format!("{acc}|{}({:.2})", new.name, new.score)
@@ -73,7 +62,7 @@ pub fn print_results(domains: &Vec<ADomain>, count: usize, fungal: bool) -> Resu
         }
         println!(
             "{}\t{}\t{}",
-            domain.name,
+            &domain.name,
             domain.stach_predictions.to_table(),
             best_predictions.join("\t")
         );

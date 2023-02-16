@@ -101,7 +101,7 @@ struct StachelhausSignature {
 }
 
 fn parse_stachelhaus_sigs(config: &Config) -> Result<Vec<StachelhausSignature>, NrpsError> {
-    let reader = File::open(&config.stachelhaus_signatures)?;
+    let reader = File::open(&config.stachelhaus_signatures())?;
     parse_sigs_internal(reader)
 }
 
