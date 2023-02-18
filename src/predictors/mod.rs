@@ -46,15 +46,17 @@ pub fn load_models(config: &Config) -> Result<Vec<SVMlightModel>, NrpsError> {
     {
         let category_dir = category_dir_res?;
         let category = match category_dir.file_name().to_str().unwrap() {
-            "NRPS3_THREE_CLUSTER" => PredictionCategory::ThreeCluster,
-            "NRPS3_LARGE_CLUSTER" => PredictionCategory::LargeCluster,
-            "NRPS3_SMALL_CLUSTER" => PredictionCategory::SmallCluster,
-            "NRPS3_SINGLE_CLUSTER" => PredictionCategory::Single,
-            "NRPS2_THREE_CLUSTER" => PredictionCategory::LegacyThreeCluster,
-            "NRPS2_THREE_CLUSTER_FUNGAL" => PredictionCategory::LegacyThreeClusterFungal,
-            "NRPS2_LARGE_CLUSTER" => PredictionCategory::LegacyLargeCluster,
-            "NRPS2_SMALL_CLUSTER" => PredictionCategory::LegacySmallCluster,
-            "NRPS2_SINGLE_CLUSTER" => PredictionCategory::LegacySingle,
+            "NRPS3_THREE_CLUSTER" => PredictionCategory::ThreeClusterV3,
+            "NRPS3_LARGE_CLUSTER" => PredictionCategory::LargeClusterV3,
+            "NRPS3_SMALL_CLUSTER" => PredictionCategory::SmallClusterV3,
+            "NRPS3_SINGLE_CLUSTER" => PredictionCategory::SingleV3,
+            "NRPS2_THREE_CLUSTER" => PredictionCategory::ThreeClusterV2,
+            "NRPS2_THREE_CLUSTER_FUNGAL" => PredictionCategory::ThreeClusterFungalV2,
+            "NRPS2_LARGE_CLUSTER" => PredictionCategory::LargeClusterV2,
+            "NRPS2_SMALL_CLUSTER" => PredictionCategory::SmallClusterV2,
+            "NRPS2_SINGLE_CLUSTER" => PredictionCategory::SingleV2,
+            "NRPS1_LARGE_CLUSTER" => PredictionCategory::LargeClusterV1,
+            "NRPS1_SMALL_CLUSTER" => PredictionCategory::SmallClusterV1,
             _ => continue,
         };
 

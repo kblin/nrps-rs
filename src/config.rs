@@ -138,10 +138,10 @@ impl Config {
         let mut categories: Vec<PredictionCategory> = Vec::with_capacity(12);
         if !self.skip_v3 {
             categories.extend_from_slice(&[
-                PredictionCategory::ThreeCluster,
-                PredictionCategory::LargeCluster,
-                PredictionCategory::SmallCluster,
-                PredictionCategory::Single,
+                PredictionCategory::ThreeClusterV3,
+                PredictionCategory::LargeClusterV3,
+                PredictionCategory::SmallClusterV3,
+                PredictionCategory::SingleV3,
             ]);
         }
 
@@ -151,15 +151,22 @@ impl Config {
 
         if !self.skip_v2 {
             categories.extend_from_slice(&[
-                PredictionCategory::LegacyThreeCluster,
-                PredictionCategory::LegacyLargeCluster,
-                PredictionCategory::LegacySmallCluster,
-                PredictionCategory::LegacySingle,
+                PredictionCategory::ThreeClusterV2,
+                PredictionCategory::LargeClusterV2,
+                PredictionCategory::SmallClusterV2,
+                PredictionCategory::SingleV2,
             ]);
         }
 
         if self.fungal && !self.skip_v2 {
-            categories.push(PredictionCategory::LegacyThreeClusterFungal);
+            categories.push(PredictionCategory::ThreeClusterFungalV2);
+        }
+
+        if !self.skip_v1 {
+            categories.extend_from_slice(&[
+                PredictionCategory::LargeClusterV1,
+                PredictionCategory::SmallClusterV1,
+            ]);
         }
 
         categories

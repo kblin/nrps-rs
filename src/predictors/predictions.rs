@@ -6,16 +6,18 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum PredictionCategory {
-    ThreeCluster,
-    LargeCluster,
-    SmallCluster,
-    Single,
+    ThreeClusterV3,
+    LargeClusterV3,
+    SmallClusterV3,
+    SingleV3,
     Stachelhaus,
-    LegacyThreeCluster,
-    LegacyThreeClusterFungal,
-    LegacyLargeCluster,
-    LegacySmallCluster,
-    LegacySingle,
+    ThreeClusterV2,
+    ThreeClusterFungalV2,
+    LargeClusterV2,
+    SmallClusterV2,
+    SingleV2,
+    LargeClusterV1,
+    SmallClusterV1,
 }
 
 #[derive(Debug, Clone, PartialEq)]
