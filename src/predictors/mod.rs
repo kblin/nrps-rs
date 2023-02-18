@@ -75,51 +75,22 @@ pub fn load_models(config: &Config) -> Result<Vec<SVMlightModel>, NrpsError> {
             } else {
                 continue;
             }
-            let info = extract_name(&model_file, FeatureEncoding::Wold);
+            let name = extract_name(&model_file);
             let handle = File::open(&model_file)?;
-            models.push(SVMlightModel::from_handle(
-                handle,
-                info.name,
-                category,
-                info.encoding,
-            )?);
+            models.push(SVMlightModel::from_handle(handle, name, category)?);
         }
     }
 
     Ok(models)
 }
 
-#[derive(Debug)]
-struct ModelFileInfo {
-    name: String,
-    encoding: FeatureEncoding,
-}
-
-fn extract_name(filename: &PathBuf, backup_encoding: FeatureEncoding) -> ModelFileInfo {
+fn extract_name(filename: &PathBuf) -> String {
     let square_brackets: &[_] = &['[', ']'];
-    let name = filename
+    filename
         .file_stem()
         .unwrap()
         .to_str()
         .unwrap()
-        .trim_matches(square_brackets);
-    let parts: Vec<&str> = name.split("_").collect();
-    if parts.len() == 3 {
-        let encoding = match parts[0] {
-            "blin" => FeatureEncoding::Blin,
-            "rausch" => FeatureEncoding::Rausch,
-            "wold" => FeatureEncoding::Wold,
-            _ => backup_encoding,
-        };
-
-        ModelFileInfo {
-            name: name.to_string(),
-            encoding,
-        }
-    } else {
-        ModelFileInfo {
-            name: name.to_string(),
-            encoding: backup_encoding,
-        }
-    }
+        .trim_matches(square_brackets)
+        .to_string()
 }

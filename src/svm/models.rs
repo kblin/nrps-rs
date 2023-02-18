@@ -76,7 +76,6 @@ impl SVMlightModel {
         handle: R,
         name: String,
         category: PredictionCategory,
-        encoding: FeatureEncoding,
     ) -> Result<Self, NrpsError>
     where
         R: Read,
@@ -103,6 +102,18 @@ impl SVMlightModel {
         line_iter.next(); // skip
 
         let dimensions = parse_int(&mut line_iter)?;
+
+        let encoding = match dimensions {
+            102 => FeatureEncoding::Wold,
+            408 => FeatureEncoding::Rausch,
+            510 => FeatureEncoding::Blin,
+            _ => {
+                return Err(NrpsError::InvalidFeatureLine(format!(
+                    "Can't determine encoding type from {} features",
+                    dimensions
+                )));
+            }
+        };
 
         line_iter.next(); // skip
         let num_vecs = parse_int(&mut line_iter)?;
