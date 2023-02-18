@@ -16,11 +16,11 @@ mod volume;
 
 pub fn encode(sequence: &String) -> Vec<f64> {
     let capacity = sequence.len() * 12;
-    let encodeded: Vec<f64> = Vec::with_capacity(capacity);
+    let encoded: Vec<f64> = Vec::with_capacity(capacity);
     sequence
         .chars()
         .map(|c| encode_one(c))
-        .fold(encodeded, |mut acc, mut part| {
+        .fold(encoded, |mut acc, mut part| {
             acc.append(&mut part);
             acc
         })
@@ -41,6 +41,25 @@ pub fn encode_one(c: char) -> Vec<f64> {
     encoded.push(beta_sheet::get(c));
     encoded.push(alpha_helix::get(c));
     encoded.push(isoelectric::get(c));
+    encoded
+}
+
+pub fn legacy_encode(sequence: &String) -> Vec<f64> {
+    let capacity = sequence.len() * 12;
+    let mut encoded: Vec<f64> = Vec::with_capacity(capacity);
+
+    let mut array: Vec<Vec<f64>> = Vec::with_capacity(12);
+
+    for c in sequence.chars() {
+        array.push(encode_one(c));
+    }
+
+    for i in 0_usize..12 {
+        for j in 0_usize..sequence.len() {
+            encoded.push(array[j][i]);
+        }
+    }
+
     encoded
 }
 
@@ -75,11 +94,27 @@ mod tests {
         '-' => [0.850000, 0.057000, -0.003000, 0.094500, 13.594000, 0.213500, 8.325000, 145.195000, 0.991500, 1.028500, 1.000000, 6.026500, ],
     };
 
+    static LEGACY_CONCAT_DATA: phf::Map<&str, [f64; 24]> = phf_map! {
+        "AC" => [-0.838548, -0.838548, 0.004378, -0.900312, -1.165652, -1.873538, 0.843010, -1.271292, -0.636447, -0.567156, -0.311135, 1.304263, -0.085800, -1.077266, -1.378285, -1.046168, -0.703066, -0.088058, -0.552985, 0.449910, 1.533010, -1.095007, -0.015368, -0.566286, ]
+    };
+
     #[test]
     fn test_rausch_encoder() {
         for (c, expected) in DATA.entries() {
             let query = c.to_string();
             let got = encode(&query);
+            dbg!(&got);
+            for (i, value) in got.iter().enumerate() {
+                assert_approx_eq!(value.clone(), expected[i]);
+            }
+        }
+    }
+
+    #[test]
+    fn test_rausch_legacy_concatenation() {
+        for (c, expected) in LEGACY_CONCAT_DATA.entries() {
+            let query = c.to_string();
+            let got = legacy_encode(&query);
             dbg!(&got);
             for (i, value) in got.iter().enumerate() {
                 assert_approx_eq!(value.clone(), expected[i]);

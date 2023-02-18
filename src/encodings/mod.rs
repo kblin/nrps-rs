@@ -5,6 +5,8 @@ pub mod blin;
 pub mod rausch;
 pub mod wold;
 
+use crate::predictors::predictions::PredictionCategory;
+
 #[derive(Debug)]
 pub enum FeatureEncoding {
     Blin,
@@ -12,10 +14,24 @@ pub enum FeatureEncoding {
     Wold,
 }
 
-pub fn encode(sequence: &String, encoding: &FeatureEncoding) -> Vec<f64> {
+pub fn encode(
+    sequence: &String,
+    encoding: &FeatureEncoding,
+    category: &PredictionCategory,
+) -> Vec<f64> {
+    let legacy_categories = &[
+        PredictionCategory::LargeClusterV1,
+        PredictionCategory::SmallClusterV1,
+    ];
     match encoding {
         FeatureEncoding::Blin => blin::encode(sequence),
-        FeatureEncoding::Rausch => rausch::encode(sequence),
+        FeatureEncoding::Rausch => {
+            if legacy_categories.contains(category) {
+                rausch::legacy_encode(sequence)
+            } else {
+                rausch::encode(sequence)
+            }
+        }
         FeatureEncoding::Wold => wold::encode(sequence),
     }
 }

@@ -64,7 +64,7 @@ impl SVMlightModel {
     }
 
     pub fn encode(&self, sequence: &String) -> Vec<f64> {
-        encode(sequence, &self.encoding)
+        encode(sequence, &self.encoding, &self.category)
     }
 
     pub fn predict_seq(&self, sequence: &String) -> Result<f64, NrpsError> {
