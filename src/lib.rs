@@ -23,7 +23,7 @@ pub fn run(config: &config::Config, signature_file: PathBuf) -> Result<Vec<ADoma
         predict_stachelhaus(&config, &mut domains)?;
     }
 
-    let models = load_models(&config.model_dir())?;
+    let models = load_models(&config)?;
     let predictor = Predictor { models };
     predictor.predict(&mut domains)?;
 
@@ -39,10 +39,14 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
 
     let cat_strings: Vec<String> = categories.iter().map(|c| format!("{c:?}")).collect();
 
-    println!(
-        "Name\tStach\tAA10 score\tAA34 score\t{}",
-        cat_strings.join("\t")
-    );
+    let mut headers: Vec<String> = Vec::with_capacity(3);
+
+    headers.push("Name".to_string());
+    if !config.skip_stachelhaus && !config.skip_new_stachelhaus_output {
+        headers.push(["Stach", "AA10 score", "AA34 score"].join("\t").to_string());
+    }
+    headers.push(cat_strings.join("\t"));
+    println!("{}", headers.join("\t"));
 
     for domain in domains.iter() {
         let mut best_predictions: Vec<String> = Vec::new();
@@ -60,12 +64,13 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
             }
             best_predictions.push(best)
         }
-        println!(
-            "{}\t{}\t{}",
-            &domain.name,
-            domain.stach_predictions.to_table(),
-            best_predictions.join("\t")
-        );
+        let mut line: Vec<String> = Vec::with_capacity(3);
+        line.push(domain.name.to_string());
+        if !config.skip_stachelhaus && !config.skip_new_stachelhaus_output {
+            line.push(domain.stach_predictions.to_table());
+        }
+        line.push(best_predictions.join("\t"));
+        println!("{}", line.join("\t"));
     }
 
     Ok(())

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use walkdir::WalkDir;
 
-use crate::encodings::FeatureEncoding;
+use crate::config::Config;
 use crate::errors::NrpsError;
 use crate::svm::models::SVMlightModel;
 use predictions::{ADomain, Prediction, PredictionCategory};
@@ -36,10 +36,10 @@ impl Predictor {
     }
 }
 
-pub fn load_models(model_dir: &PathBuf) -> Result<Vec<SVMlightModel>, NrpsError> {
+pub fn load_models(config: &Config) -> Result<Vec<SVMlightModel>, NrpsError> {
     let mut models = Vec::with_capacity(1000);
 
-    for category_dir_res in WalkDir::new(model_dir)
+    for category_dir_res in WalkDir::new(&config.model_dir())
         .min_depth(1)
         .max_depth(1)
         .sort_by_file_name()
@@ -57,6 +57,11 @@ pub fn load_models(model_dir: &PathBuf) -> Result<Vec<SVMlightModel>, NrpsError>
             "NRPS2_SINGLE_CLUSTER" => PredictionCategory::LegacySingle,
             _ => continue,
         };
+
+        if !config.categories().contains(&category) {
+            continue;
+        }
+
         for model_file_res in WalkDir::new(category_dir.path())
             .min_depth(1)
             .max_depth(1)

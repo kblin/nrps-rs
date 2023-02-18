@@ -54,6 +54,10 @@ pub struct Cli {
     /// Disable Stachelhaus lookups
     #[arg(short = 'S', long)]
     pub skip_stachelhaus: bool,
+
+    /// Disable printing new-style AA34 Stachelhaus results
+    #[arg(long)]
+    pub skip_new_stachelhaus_output: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -65,6 +69,7 @@ struct ParsedConfig {
     pub skip_v2: Option<bool>,
     pub skip_v1: Option<bool>,
     pub skip_stachelhaus: Option<bool>,
+    pub skip_new_stachelhaus_output: Option<bool>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -78,6 +83,7 @@ pub struct Config {
     pub skip_v2: bool,
     pub skip_v1: bool,
     pub skip_stachelhaus: bool,
+    pub skip_new_stachelhaus_output: bool,
 }
 
 fn set_stach_from_model_dir(model_dir: &PathBuf) -> PathBuf {
@@ -104,6 +110,7 @@ impl Config {
             skip_v2: false,
             skip_v1: false,
             skip_stachelhaus: false,
+            skip_new_stachelhaus_output: false,
         }
     }
 
@@ -191,6 +198,10 @@ impl From<ParsedConfig> for Config {
             config.skip_stachelhaus = skip_stachelhaus;
         }
 
+        if let Some(skip_new_stach) = item.skip_new_stachelhaus_output {
+            config.skip_new_stachelhaus_output = skip_new_stach;
+        }
+
         config
     }
 }
@@ -216,6 +227,13 @@ where
         }
         config.count = count_val;
     }
+
+    config.skip_v3 = args.skip_v3;
+    config.skip_v2 = args.skip_v2;
+    config.skip_v1 = args.skip_v1;
+    config.skip_stachelhaus = args.skip_stachelhaus;
+    config.skip_new_stachelhaus_output = args.skip_new_stachelhaus_output;
+
     Ok(config)
 }
 
@@ -238,6 +256,7 @@ mod tests {
             skip_v2: false,
             skip_v1: false,
             skip_stachelhaus: false,
+            skip_new_stachelhaus_output: false,
         }
     }
 
@@ -335,6 +354,46 @@ mod tests {
             &args,
         )
         .unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[rstest]
+    fn test_skip_v3(mut args: Cli) {
+        args.skip_v3 = true;
+
+        let mut expected = Config::new();
+        expected.skip_v3 = true;
+        let got = parse_config("".as_bytes(), &args).unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[rstest]
+    fn test_skip_v2(mut args: Cli) {
+        args.skip_v2 = true;
+
+        let mut expected = Config::new();
+        expected.skip_v2 = true;
+        let got = parse_config("".as_bytes(), &args).unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[rstest]
+    fn test_skip_v1(mut args: Cli) {
+        args.skip_v1 = true;
+
+        let mut expected = Config::new();
+        expected.skip_v1 = true;
+        let got = parse_config("".as_bytes(), &args).unwrap();
+        assert_eq!(expected, got);
+    }
+
+    #[rstest]
+    fn test_skip_stachelhaus(mut args: Cli) {
+        args.skip_stachelhaus = true;
+
+        let mut expected = Config::new();
+        expected.skip_stachelhaus = true;
+        let got = parse_config("".as_bytes(), &args).unwrap();
         assert_eq!(expected, got);
     }
 }

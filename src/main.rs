@@ -34,10 +34,13 @@ fn main() {
 
     eprintln!("Printing the best {} hit(s)", &config.count);
     eprintln!("Model dir is {}", &config.model_dir().display());
-    eprintln!(
-        "Stachelhaus signatures from {}",
-        &config.stachelhaus_signatures().display()
-    );
+
+    if !config.skip_stachelhaus {
+        eprintln!(
+            "Stachelhaus signatures from {}",
+            &config.stachelhaus_signatures().display()
+        );
+    }
 
     let domains = run(&config, cli.signatures).unwrap();
     print_results(&config, &domains).unwrap();
