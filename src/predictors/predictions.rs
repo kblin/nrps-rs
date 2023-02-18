@@ -137,18 +137,18 @@ impl StachPredictionList {
             aa34_scores.push(pred.aa34_score);
         }
 
-        let substrate_string = substrates.join("|");
+        let substrate_string = substrates.join("/");
         let aa10_string = aa10_scores
             .iter()
             .map(|a| format!("{a:.2}"))
-            .fold(String::from(""), |acc, new| format!("{acc}|{new}"))
-            .trim_matches('|')
+            .fold(String::from(""), |acc, new| format!("{acc}/{new}"))
+            .trim_matches('/')
             .to_string();
         let aa34_string = aa34_scores
             .iter()
             .map(|a| format!("{a:.2}"))
-            .fold(String::from(""), |acc, new| format!("{acc}|{new}"))
-            .trim_matches('|')
+            .fold(String::from(""), |acc, new| format!("{acc}/{new}"))
+            .trim_matches('/')
             .to_string();
 
         format!("{substrate_string}\t{aa10_string}\t{aa34_string}")
