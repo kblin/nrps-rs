@@ -132,6 +132,17 @@ mod tests {
     }
 
     #[test]
+    fn test_element_subtract() {
+        let v1 = FeatureVector::new(Vec::<f64>::from([3.0, 2.0]));
+        let v2 = FeatureVector::new(Vec::<f64>::from([1.0, -2.0]));
+        let expected = Vec::from([2.0_f64, 4.0]);
+        assert_eq!(
+            element_subtract(&v1.values(), &v2.values()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
     fn test_from_line() {
         let line = String::from("10 1:-1.6023999 3:-0.55470002 5:-0.63520002 # some junk");
         let v1 = SupportVector::from_line(line, 5).unwrap();
