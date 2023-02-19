@@ -8,7 +8,7 @@ pub mod predictors;
 pub mod svm;
 
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
 
 use errors::NrpsError;
@@ -88,8 +88,13 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
 }
 
 pub fn parse_domains(signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError> {
+    if signature_file == PathBuf::from("-") {
+        let reader = BufReader::new(io::stdin());
+        return parse_domains_from_reader(reader);
+    }
+
     if !signature_file.exists() {
-        let err = format!("{} doesn't exist", signature_file.display());
+        let err = format!("'{}' doesn't exist", signature_file.display());
         return Err(NrpsError::SignatureFileError(err));
     }
 
