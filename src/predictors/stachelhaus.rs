@@ -130,7 +130,7 @@ where
     Ok(signatures)
 }
 
-fn extract_aa10(aa34: &String) -> Result<String, NrpsError> {
+pub fn extract_aa10(aa34: &String) -> Result<String, NrpsError> {
     let mut aa10 = String::with_capacity(10);
     for (i, c) in aa34.chars().enumerate() {
         match i {

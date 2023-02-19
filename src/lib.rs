@@ -41,9 +41,18 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
 
     let mut headers: Vec<String> = Vec::with_capacity(3);
 
-    headers.push("Name".to_string());
+    headers.push("Name\t8A signature\tStachelhaus signature\t".to_string());
     if !config.skip_stachelhaus && !config.skip_new_stachelhaus_output {
-        headers.push(["Stach", "AA10 score", "AA34 score"].join("\t").to_string());
+        headers.push(
+            [
+                "Full Stachelhaus match",
+                "AA10 score",
+                "AA10 signature matched",
+                "AA34 score",
+            ]
+            .join("\t")
+            .to_string(),
+        );
     }
     headers.push(cat_strings.join("\t"));
     println!("{}", headers.join("\t"));
@@ -64,8 +73,10 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
             }
             best_predictions.push(best)
         }
-        let mut line: Vec<String> = Vec::with_capacity(3);
+        let mut line: Vec<String> = Vec::with_capacity(5);
         line.push(domain.name.to_string());
+        line.push(domain.aa34.to_string());
+        line.push(domain.aa10.to_string());
         if !config.skip_stachelhaus && !config.skip_new_stachelhaus_output {
             line.push(domain.stach_predictions.to_table());
         }

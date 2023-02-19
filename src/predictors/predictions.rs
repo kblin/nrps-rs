@@ -4,6 +4,8 @@
 use std::cmp::min;
 use std::collections::HashMap;
 
+use super::stachelhaus::extract_aa10;
+
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum PredictionCategory {
     ThreeClusterV3,
@@ -131,11 +133,13 @@ impl StachPredictionList {
     pub fn to_table(&self) -> String {
         let mut substrates: Vec<String> = Vec::with_capacity(self.len());
         let mut aa10_scores: Vec<f64> = Vec::with_capacity(self.len());
+        let mut aa10_seqs: Vec<String> = Vec::with_capacity(self.len());
         let mut aa34_scores: Vec<f64> = Vec::with_capacity(self.len());
 
         for pred in self.get_best().iter() {
             substrates.push(pred.name.clone());
             aa10_scores.push(pred.aa10_score);
+            aa10_seqs.push(pred.aa10_sig.clone());
             aa34_scores.push(pred.aa34_score);
         }
 
@@ -146,6 +150,11 @@ impl StachPredictionList {
             .fold(String::from(""), |acc, new| format!("{acc}/{new}"))
             .trim_matches('/')
             .to_string();
+        let aa10_seq_string = aa10_seqs
+            .iter()
+            .fold(String::from(""), |acc, new| format!("{acc}/{new}"))
+            .trim_matches('/')
+            .to_string();
         let aa34_string = aa34_scores
             .iter()
             .map(|a| format!("{a:.2}"))
@@ -153,7 +162,7 @@ impl StachPredictionList {
             .trim_matches('/')
             .to_string();
 
-        format!("{substrate_string}\t{aa10_string}\t{aa34_string}")
+        format!("{substrate_string}\t{aa10_string}\t{aa10_seq_string}\t{aa34_string}")
     }
 }
 
@@ -161,15 +170,18 @@ impl StachPredictionList {
 pub struct ADomain {
     pub name: String,
     pub aa34: String,
+    pub aa10: String,
     predictions: HashMap<PredictionCategory, PredictionList>,
     pub stach_predictions: StachPredictionList,
 }
 
 impl ADomain {
     pub fn new(name: String, aa34: String) -> Self {
+        let aa10 = extract_aa10(&aa34).unwrap();
         ADomain {
             name,
             aa34,
+            aa10,
             predictions: HashMap::new(),
             stach_predictions: StachPredictionList::new(),
         }
