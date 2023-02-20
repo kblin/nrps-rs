@@ -41,7 +41,7 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
 
     let mut headers: Vec<String> = Vec::with_capacity(3);
 
-    headers.push("Name\t8A signature\tStachelhaus signature\t".to_string());
+    headers.push("Name\t8A signature\tStachelhaus signature".to_string());
     if !config.skip_stachelhaus && !config.skip_new_stachelhaus_output {
         headers.push(
             [
