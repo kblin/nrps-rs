@@ -47,7 +47,7 @@ impl PartialOrd for StachPrediction {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PredictionList {
     predictions: Vec<Prediction>,
 }
@@ -87,7 +87,7 @@ impl PredictionList {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StachPredictionList {
     predictions: Vec<StachPrediction>,
 }
@@ -166,7 +166,7 @@ impl StachPredictionList {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ADomain {
     pub name: String,
     pub aa34: String,
