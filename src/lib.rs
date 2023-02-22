@@ -16,16 +16,37 @@ use predictors::predictions::ADomain;
 use predictors::stachelhaus::predict_stachelhaus;
 use predictors::{load_models, Predictor};
 
-pub fn run(config: &config::Config, signature_file: PathBuf) -> Result<Vec<ADomain>, NrpsError> {
+pub fn run_on_file(
+    config: &config::Config,
+    signature_file: PathBuf,
+) -> Result<Vec<ADomain>, NrpsError> {
     let mut domains = parse_domains(signature_file)?;
+    run(config, &mut domains)?;
+    Ok(domains)
+}
 
+pub fn run(config: &config::Config, domains: &mut Vec<ADomain>) -> Result<(), NrpsError> {
     if !config.skip_stachelhaus {
-        predict_stachelhaus(&config, &mut domains)?;
+        predict_stachelhaus(&config, domains)?;
     }
 
     let models = load_models(&config)?;
     let predictor = Predictor { models };
-    predictor.predict(&mut domains)?;
+    predictor.predict(domains)?;
+    Ok(())
+}
+
+pub fn run_on_strings(
+    config: &config::Config,
+    lines: Vec<String>,
+) -> Result<Vec<ADomain>, NrpsError> {
+    let mut domains = Vec::with_capacity(lines.len());
+
+    for line in lines.iter() {
+        domains.push(parse_domain(line.to_string())?);
+    }
+
+    run(config, &mut domains)?;
 
     Ok(domains)
 }
@@ -115,24 +136,28 @@ where
         if line == "" {
             continue;
         }
-        let parts: Vec<&str> = line.split("\t").collect();
-        if parts.len() < 2 {
-            return Err(NrpsError::SignatureError(line));
-        }
-        if parts[0].len() != 34 {
-            return Err(NrpsError::SignatureError(line));
-        }
 
-        let name: String;
-        match parts.len() {
-            2 => name = parts[1].to_string(),
-            _ => name = format!("{}_{}", parts[2], parts[1]),
-        }
-
-        domains.push(ADomain::new(name, parts[0].to_string()));
+        domains.push(parse_domain(line)?);
     }
 
     Ok(domains)
+}
+
+pub fn parse_domain(line: String) -> Result<ADomain, NrpsError> {
+    let parts: Vec<&str> = line.split("\t").collect();
+    if parts.len() < 2 {
+        return Err(NrpsError::SignatureError(line));
+    }
+    if parts[0].len() != 34 {
+        return Err(NrpsError::SignatureError(line));
+    }
+
+    let name: String;
+    match parts.len() {
+        2 => name = parts[1].to_string(),
+        _ => name = format!("{}_{}", parts[2], parts[1]),
+    }
+    Ok(ADomain::new(name, parts[0].to_string()))
 }
 
 #[cfg(test)]

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 use nrps_rs::config::{parse_config, Cli, Config};
-use nrps_rs::{print_results, run};
+use nrps_rs::{print_results, run_on_file};
 
 fn main() {
     let cli = Cli::parse();
@@ -42,7 +42,7 @@ fn main() {
         );
     }
 
-    let domains = run(&config, cli.signatures).unwrap();
+    let domains = run_on_file(&config, cli.signatures).unwrap();
     print_results(&config, &domains).unwrap();
 }
 
