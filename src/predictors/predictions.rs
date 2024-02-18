@@ -65,7 +65,7 @@ impl PredictionList {
     pub fn get_best_n(&self, count: usize) -> Vec<Prediction> {
         let mut predictions = Vec::with_capacity(count);
         let slice_end = min(count, self.predictions.len());
-        if self.predictions.len() == 0 {
+        if self.predictions.is_empty() {
             return predictions;
         }
 
@@ -85,6 +85,16 @@ impl PredictionList {
     pub fn len(&self) -> usize {
         self.predictions.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.predictions.is_empty()
+    }
+}
+
+impl Default for PredictionList {
+    fn default() -> Self {
+        PredictionList::new()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -100,14 +110,14 @@ impl StachPredictionList {
 
     pub fn add(&mut self, prediction: StachPrediction) {
         self.predictions.push(prediction);
-        self.predictions.sort_by(|a, b| a.partial_cmp(&b).unwrap());
+        self.predictions.sort_by(|a, b| a.partial_cmp(b).unwrap());
         self.predictions.reverse()
     }
 
     pub fn get_best_n(&self, count: usize) -> Vec<StachPrediction> {
         let mut predictions = Vec::with_capacity(count);
         let slice_end = min(count, self.predictions.len());
-        if self.predictions.len() == 0 {
+        if self.predictions.is_empty() {
             return predictions;
         }
 
@@ -128,6 +138,10 @@ impl StachPredictionList {
 
     pub fn len(&self) -> usize {
         self.predictions.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.predictions.is_empty()
     }
 
     pub fn to_table(&self) -> String {
@@ -163,6 +177,12 @@ impl StachPredictionList {
             .to_string();
 
         format!("{substrate_string}\t{aa10_string}\t{aa10_seq_string}\t{aa34_string}")
+    }
+}
+
+impl Default for StachPredictionList {
+    fn default() -> Self {
+        StachPredictionList::new()
     }
 }
 

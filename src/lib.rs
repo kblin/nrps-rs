@@ -25,12 +25,12 @@ pub fn run_on_file(
     Ok(domains)
 }
 
-pub fn run(config: &config::Config, domains: &mut Vec<ADomain>) -> Result<(), NrpsError> {
+pub fn run(config: &config::Config, domains: &mut [ADomain]) -> Result<(), NrpsError> {
     if !config.skip_stachelhaus {
-        predict_stachelhaus(&config, domains)?;
+        predict_stachelhaus(config, domains)?;
     }
 
-    let models = load_models(&config)?;
+    let models = load_models(config)?;
     let predictor = Predictor { models };
     predictor.predict(domains)?;
     Ok(())
@@ -51,7 +51,7 @@ pub fn run_on_strings(
     Ok(domains)
 }
 
-pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<(), NrpsError> {
+pub fn print_results(config: &config::Config, domains: &[ADomain]) -> Result<(), NrpsError> {
     if config.count < 1 {
         return Err(NrpsError::CountError(config.count));
     }
@@ -82,14 +82,14 @@ pub fn print_results(config: &config::Config, domains: &Vec<ADomain>) -> Result<
         let mut best_predictions: Vec<String> = Vec::new();
         for cat in categories.iter() {
             let mut best = domain
-                .get_best_n(&cat, config.count)
+                .get_best_n(cat, config.count)
                 .iter()
                 .fold("".to_string(), |acc, new| {
                     format!("{acc}|{}({:.2})", new.name, new.score)
                 })
                 .trim_matches('|')
                 .to_string();
-            if best == "" {
+            if best.is_empty() {
                 best = "N/A".to_string();
             }
             best_predictions.push(best)
@@ -133,7 +133,7 @@ where
 
     for line_res in reader.lines() {
         let line = line_res?.trim().to_string();
-        if line == "" {
+        if line.is_empty() {
             continue;
         }
 
@@ -144,7 +144,7 @@ where
 }
 
 pub fn parse_domain(line: String) -> Result<ADomain, NrpsError> {
-    let parts: Vec<&str> = line.split("\t").collect();
+    let parts: Vec<&str> = line.split('\t').collect();
     if parts.len() < 2 {
         return Err(NrpsError::SignatureError(line));
     }
@@ -152,11 +152,10 @@ pub fn parse_domain(line: String) -> Result<ADomain, NrpsError> {
         return Err(NrpsError::SignatureError(line));
     }
 
-    let name: String;
-    match parts.len() {
-        2 => name = parts[1].to_string(),
-        _ => name = format!("{}_{}", parts[2], parts[1]),
-    }
+    let name = match parts.len() {
+        2 => parts[1].to_string(),
+        _ => format!("{}_{}", parts[2], parts[1]),
+    };
     Ok(ADomain::new(name, parts[0].to_string()))
 }
 

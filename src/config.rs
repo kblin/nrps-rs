@@ -4,7 +4,7 @@
 use std::convert::From;
 use std::env;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use serde::Deserialize;
@@ -86,8 +86,8 @@ pub struct Config {
     pub skip_new_stachelhaus_output: bool,
 }
 
-fn set_stach_from_model_dir(model_dir: &PathBuf) -> PathBuf {
-    let mut stachelhaus_signatures = model_dir.clone();
+fn set_stach_from_model_dir(model_dir: &Path) -> PathBuf {
+    let mut stachelhaus_signatures = model_dir.to_owned();
     stachelhaus_signatures.push("signatures.tsv");
     stachelhaus_signatures
 }
@@ -170,6 +170,12 @@ impl Config {
         }
 
         categories
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config::new()
     }
 }
 

@@ -39,12 +39,11 @@ impl SVMlightModel {
         kernel_type: KernelType,
         gamma: f64,
     ) -> Self {
-        let kernel: Box<dyn Kernel>;
-        match kernel_type {
-            KernelType::Linear => kernel = Box::new(LinearKernel {}),
-            KernelType::RBF => kernel = Box::new(RBFKernel::new(gamma)),
+        let kernel: Box<dyn Kernel> = match kernel_type {
+            KernelType::Linear => Box::new(LinearKernel {}),
+            KernelType::RBF => Box::new(RBFKernel::new(gamma)),
             _ => unimplemented!(),
-        }
+        };
         SVMlightModel {
             name,
             category,
@@ -63,11 +62,11 @@ impl SVMlightModel {
         Ok(res? - self.bias)
     }
 
-    pub fn encode(&self, sequence: &String) -> Vec<f64> {
+    pub fn encode(&self, sequence: &str) -> Vec<f64> {
         encode(sequence, &self.encoding, &self.category)
     }
 
-    pub fn predict_seq(&self, sequence: &String) -> Result<f64, NrpsError> {
+    pub fn predict_seq(&self, sequence: &str) -> Result<f64, NrpsError> {
         let fvec = FeatureVector::new(self.encode(sequence));
         self.predict(&fvec)
     }
@@ -122,7 +121,7 @@ impl SVMlightModel {
 
         let mut vectors = Vec::with_capacity(num_vecs);
 
-        while let Some(line_res) = line_iter.next() {
+        for line_res in &mut line_iter {
             let svec = SupportVector::from_line(line_res?, dimensions)?;
             vectors.push(svec);
         }
@@ -141,7 +140,7 @@ impl SVMlightModel {
 
 fn parse_float(line_iter: &mut Lines<BufReader<impl Read>>) -> Result<f64, NrpsError> {
     if let Some(line_result) = line_iter.next() {
-        if let Some(raw_value) = line_result?.trim_end().splitn(2, "#").next() {
+        if let Some(raw_value) = line_result?.trim_end().split('#').next() {
             return Ok(raw_value.trim().parse::<f64>()?);
         }
     }
@@ -152,7 +151,7 @@ fn parse_float(line_iter: &mut Lines<BufReader<impl Read>>) -> Result<f64, NrpsE
 
 fn parse_int(line_iter: &mut Lines<BufReader<impl Read>>) -> Result<usize, NrpsError> {
     if let Some(line_result) = line_iter.next() {
-        if let Some(raw_value) = line_result?.trim_end().splitn(2, "#").next() {
+        if let Some(raw_value) = line_result?.trim_end().split('#').next() {
             return Ok(raw_value.trim().parse::<usize>()?);
         }
     }

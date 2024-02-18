@@ -4,7 +4,7 @@ pub mod predictions;
 pub mod stachelhaus;
 
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::Path;
 
 use walkdir::WalkDir;
 
@@ -19,7 +19,7 @@ pub struct Predictor {
 }
 
 impl Predictor {
-    pub fn predict(&self, domains: &mut Vec<ADomain>) -> Result<(), NrpsError> {
+    pub fn predict(&self, domains: &mut [ADomain]) -> Result<(), NrpsError> {
         for model in self.models.iter() {
             for domain in domains.iter_mut() {
                 let score = model.predict_seq(&domain.aa34)?;
@@ -39,7 +39,7 @@ impl Predictor {
 pub fn load_models(config: &Config) -> Result<Vec<SVMlightModel>, NrpsError> {
     let mut models = Vec::with_capacity(1000);
 
-    for category_dir_res in WalkDir::new(&config.model_dir())
+    for category_dir_res in WalkDir::new(config.model_dir())
         .min_depth(1)
         .max_depth(1)
         .sort_by_file_name()
@@ -86,7 +86,7 @@ pub fn load_models(config: &Config) -> Result<Vec<SVMlightModel>, NrpsError> {
     Ok(models)
 }
 
-fn extract_name(filename: &PathBuf) -> String {
+fn extract_name(filename: &Path) -> String {
     let square_brackets: &[_] = &['[', ']'];
     filename
         .file_stem()

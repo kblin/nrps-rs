@@ -50,19 +50,18 @@ impl SupportVector {
         SupportVector { values, yalpha }
     }
     pub fn from_line(line: String, dimension: usize) -> Result<Self, NrpsError> {
-        let yalpha: f64;
         let mut values = vec![0.0; dimension];
         let parts: Vec<&str> = line.split(char::is_whitespace).collect();
         if parts.len() < 2 {
             return Err(NrpsError::InvalidFeatureLine(line));
         }
-        yalpha = parts[0].parse::<f64>()?;
+        let yalpha = parts[0].parse::<f64>()?;
 
         for token in parts[1..].iter() {
             if token == &"#" {
                 break;
             }
-            let value_parts: Vec<&str> = token.splitn(2, ":").collect();
+            let value_parts: Vec<&str> = token.splitn(2, ':').collect();
             let idx = value_parts[0].parse::<usize>()? - 1;
             if idx > dimension - 1 {
                 return Err(NrpsError::InvalidFeatureLine(line));
@@ -81,7 +80,7 @@ impl Vector for SupportVector {
     }
 }
 
-fn dot(a: &Vec<f64>, b: &Vec<f64>) -> Result<f64, NrpsError> {
+fn dot(a: &[f64], b: &[f64]) -> Result<f64, NrpsError> {
     if a.len() != b.len() {
         return Err(NrpsError::DimensionMismatch {
             first: a.len(),
@@ -93,7 +92,7 @@ fn dot(a: &Vec<f64>, b: &Vec<f64>) -> Result<f64, NrpsError> {
         .fold(0.0, |sum, (el_a, el_b)| sum + el_a * el_b))
 }
 
-fn element_subtract(a: &Vec<f64>, b: &Vec<f64>) -> Result<Vec<f64>, NrpsError> {
+fn element_subtract(a: &[f64], b: &[f64]) -> Result<Vec<f64>, NrpsError> {
     if a.len() != b.len() {
         return Err(NrpsError::DimensionMismatch {
             first: a.len(),
@@ -137,7 +136,7 @@ mod tests {
         let v2 = FeatureVector::new(Vec::<f64>::from([1.0, -2.0]));
         let expected = Vec::from([2.0_f64, 4.0]);
         assert_eq!(
-            element_subtract(&v1.values(), &v2.values()).unwrap(),
+            element_subtract(v1.values(), v2.values()).unwrap(),
             expected
         );
     }

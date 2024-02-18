@@ -11,13 +11,13 @@ use super::predictions::{
     ADomain, Prediction, PredictionCategory, PredictionList, StachPrediction, StachPredictionList,
 };
 
-pub fn predict_stachelhaus(config: &Config, domains: &mut Vec<ADomain>) -> Result<(), NrpsError> {
+pub fn predict_stachelhaus(config: &Config, domains: &mut [ADomain]) -> Result<(), NrpsError> {
     let signatures = parse_stachelhaus_sigs(config)?;
     predict(domains, signatures)
 }
 
 fn predict(
-    domains: &mut Vec<ADomain>,
+    domains: &mut [ADomain],
     signatures: Vec<StachelhausSignature>,
 ) -> Result<(), NrpsError> {
     for domain in domains.iter_mut() {
@@ -101,7 +101,7 @@ struct StachelhausSignature {
 }
 
 fn parse_stachelhaus_sigs(config: &Config) -> Result<Vec<StachelhausSignature>, NrpsError> {
-    let reader = File::open(&config.stachelhaus_signatures())?;
+    let reader = File::open(config.stachelhaus_signatures())?;
     parse_sigs_internal(reader)
 }
 
@@ -114,7 +114,7 @@ where
     for line_res in reader.lines() {
         let parts: Vec<String> = line_res?
             .trim()
-            .split("\t")
+            .split('\t')
             .map(|s| s.to_string())
             .collect();
         if parts.len() != 5 {
@@ -130,7 +130,7 @@ where
     Ok(signatures)
 }
 
-pub fn extract_aa10(aa34: &String) -> Result<String, NrpsError> {
+pub fn extract_aa10(aa34: &str) -> Result<String, NrpsError> {
     let mut aa10 = String::with_capacity(10);
     for (i, c) in aa34.chars().enumerate() {
         match i {
@@ -140,13 +140,13 @@ pub fn extract_aa10(aa34: &String) -> Result<String, NrpsError> {
     }
     aa10.push('K');
     if aa10.len() != 10 {
-        return Err(NrpsError::SignatureError(aa34.clone()));
+        return Err(NrpsError::SignatureError(aa34.to_string()));
     }
 
     Ok(aa10)
 }
 
-fn hamming_dist(a: &String, b: &String) -> usize {
+fn hamming_dist(a: &str, b: &str) -> usize {
     a.chars().zip(b.chars()).filter(|t| t.0 != t.1).count()
 }
 
@@ -159,14 +159,14 @@ mod tests {
     #[test]
     fn test_extract_aa10() {
         let expected = "DMVICGCAAK".to_string();
-        let got = extract_aa10(&"HAKSFDMSVVQCIACMGGETNCYGPTEITAAATF".to_string());
+        let got = extract_aa10("HAKSFDMSVVQCIACMGGETNCYGPTEITAAATF");
         assert!(got.is_ok());
         assert_eq!(expected, got.unwrap());
     }
 
     #[test]
     fn test_extract_aa10_error() {
-        let got = extract_aa10(&"THISISWAYTOOSHORT".to_string());
+        let got = extract_aa10("THISISWAYTOOSHORT");
         assert!(got.is_err());
     }
 
@@ -180,9 +180,11 @@ mod tests {
         assert_eq!(hamming_dist(&a, &c), 4);
     }
 
+    type Parts = (usize, usize, usize, usize);
+
     #[test]
     fn test_calculate_score() {
-        let test_cases: &[((usize, usize, usize, usize), f64)] = &[
+        let test_cases: &[(Parts, f64)] = &[
             ((10, 10, 10, 10), 1.0),
             ((10, 10, 9, 10), 0.99),
             ((10, 10, 5, 10), 0.95),

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use nrps_rs::config::{parse_config, Cli, Config};
+use nrps_rs::config::{parse_config, Cli};
 use nrps_rs::{print_results, run_on_file};
 
 fn main() {
@@ -22,15 +22,14 @@ fn main() {
     }
 
     eprintln!("Running on {}", cli.signatures.display());
-    let config: Config;
 
-    if config_file.exists() {
+    let config = if config_file.exists() {
         eprintln!("Using config from {}", config_file.display());
-        config = parse_config(File::open(config_file).unwrap(), &cli).unwrap();
+        parse_config(File::open(config_file).unwrap(), &cli).unwrap()
     } else {
         eprintln!("Using default config");
-        config = parse_config("".as_bytes(), &cli).unwrap();
-    }
+        parse_config("".as_bytes(), &cli).unwrap()
+    };
 
     eprintln!("Printing the best {} hit(s)", &config.count);
     eprintln!("Model dir is {}", &config.model_dir().display());

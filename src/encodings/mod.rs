@@ -15,7 +15,7 @@ pub enum FeatureEncoding {
 }
 
 pub fn encode(
-    sequence: &String,
+    sequence: &str,
     encoding: &FeatureEncoding,
     category: &PredictionCategory,
 ) -> Vec<f64> {
@@ -38,7 +38,7 @@ pub fn encode(
 
 pub fn get_value(map: &phf::Map<char, f64>, c: char, mean: f64, stdev: f64, use_mean: bool) -> f64 {
     if let Some(value) = map.get(&c) {
-        return normalise(value.clone(), mean, stdev);
+        return normalise(*value, mean, stdev);
     }
     if use_mean {
         return mean;

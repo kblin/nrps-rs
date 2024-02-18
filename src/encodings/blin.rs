@@ -4,12 +4,12 @@
 use super::rausch;
 use super::wold;
 
-pub fn encode(sequence: &String) -> Vec<f64> {
+pub fn encode(sequence: &str) -> Vec<f64> {
     let capacity = sequence.len() * 3;
     let encodeded: Vec<f64> = Vec::with_capacity(capacity);
     sequence
         .chars()
-        .map(|c| encode_one(c))
+        .map(encode_one)
         .fold(encodeded, |mut acc, mut part| {
             acc.append(&mut part);
             acc

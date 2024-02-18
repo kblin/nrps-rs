@@ -14,12 +14,12 @@ mod polar_radzicka;
 mod polar_zimmerman;
 mod volume;
 
-pub fn encode(sequence: &String) -> Vec<f64> {
+pub fn encode(sequence: &str) -> Vec<f64> {
     let capacity = sequence.len() * 12;
     let encoded: Vec<f64> = Vec::with_capacity(capacity);
     sequence
         .chars()
-        .map(|c| encode_one(c))
+        .map(encode_one)
         .fold(encoded, |mut acc, mut part| {
             acc.append(&mut part);
             acc
@@ -28,23 +28,23 @@ pub fn encode(sequence: &String) -> Vec<f64> {
 
 // NRPSPredictor 2 uses {4,5,6,7,11,10,9,12,3,2,1,8} as the feature order
 pub fn encode_one(c: char) -> Vec<f64> {
-    let mut encoded = Vec::with_capacity(12);
-    encoded.push(hydrogenbond::get(c));
-    encoded.push(hydrophobicity_neu1::get(c));
-    encoded.push(hydrophobicity_neu2::get(c));
-    encoded.push(hydrophobicity_neu3::get(c));
-    encoded.push(polar_zimmerman::get(c));
-    encoded.push(polar_radzicka::get(c));
-    encoded.push(polar_grantham::get(c));
-    encoded.push(volume::get(c));
-    encoded.push(beta_turn::get(c));
-    encoded.push(beta_sheet::get(c));
-    encoded.push(alpha_helix::get(c));
-    encoded.push(isoelectric::get(c));
-    encoded
+    vec![
+        hydrogenbond::get(c),
+        hydrophobicity_neu1::get(c),
+        hydrophobicity_neu2::get(c),
+        hydrophobicity_neu3::get(c),
+        polar_zimmerman::get(c),
+        polar_radzicka::get(c),
+        polar_grantham::get(c),
+        volume::get(c),
+        beta_turn::get(c),
+        beta_sheet::get(c),
+        alpha_helix::get(c),
+        isoelectric::get(c),
+    ]
 }
 
-pub fn legacy_encode(sequence: &String) -> Vec<f64> {
+pub fn legacy_encode(sequence: &str) -> Vec<f64> {
     let capacity = sequence.len() * 12;
     let mut encoded: Vec<f64> = Vec::with_capacity(capacity);
 
@@ -55,8 +55,8 @@ pub fn legacy_encode(sequence: &String) -> Vec<f64> {
     }
 
     for i in 0_usize..12 {
-        for j in 0_usize..sequence.len() {
-            encoded.push(array[j][i]);
+        for a in array.iter().take(sequence.len()) {
+            encoded.push(a[i]);
         }
     }
 

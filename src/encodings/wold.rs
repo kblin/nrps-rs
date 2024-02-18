@@ -5,12 +5,12 @@ use phf::phf_map;
 
 use super::get_value;
 
-pub fn encode(sequence: &String) -> Vec<f64> {
+pub fn encode(sequence: &str) -> Vec<f64> {
     let capacity = sequence.len() * 3;
     let encodeded: Vec<f64> = Vec::with_capacity(capacity);
     sequence
         .chars()
-        .map(|c| encode_one(c))
+        .map(encode_one)
         .fold(encodeded, |mut acc, mut part| {
             acc.append(&mut part);
             acc
@@ -18,23 +18,23 @@ pub fn encode(sequence: &String) -> Vec<f64> {
 }
 
 pub fn encode_one(c: char) -> Vec<f64> {
-    let mut encoded: Vec<f64> = Vec::with_capacity(3);
-    encoded.push(get_value(
-        &HYDROPHOBICITY_MAP,
-        c,
-        HYDROPHOBICITY_MEAN,
-        HYDROPHOBICITY_STDEV,
-        false,
-    ));
-    encoded.push(get_value(&SIZE_MAP, c, SIZE_MEAN, SIZE_STDEV, false));
-    encoded.push(get_value(
-        &POLARITY_CHARGE_MAP,
-        c,
-        POLARITY_CHARGE_MEAN,
-        POLARITY_CHARGE_STDEV,
-        false,
-    ));
-    encoded
+    vec![
+        get_value(
+            &HYDROPHOBICITY_MAP,
+            c,
+            HYDROPHOBICITY_MEAN,
+            HYDROPHOBICITY_STDEV,
+            false,
+        ),
+        get_value(&SIZE_MAP, c, SIZE_MEAN, SIZE_STDEV, false),
+        get_value(
+            &POLARITY_CHARGE_MAP,
+            c,
+            POLARITY_CHARGE_MEAN,
+            POLARITY_CHARGE_STDEV,
+            false,
+        ),
+    ]
 }
 
 static HYDROPHOBICITY_MAP: phf::Map<char, f64> = phf_map! {
@@ -87,6 +87,7 @@ static SIZE_MAP: phf::Map<char, f64> = phf_map! {
 const SIZE_MEAN: f64 = 0.0011538461538461635;
 const SIZE_STDEV: f64 = 1.8589595518420015;
 
+#[allow(clippy::approx_constant)] // clippy thinks the -3.14 here should be a PI constant
 static POLARITY_CHARGE_MAP: phf::Map<char, f64> = phf_map! {
     'A' => 0.09,
     'R' => -3.44,
