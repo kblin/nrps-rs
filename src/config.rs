@@ -65,6 +65,7 @@ struct ParsedConfig {
     pub model_dir: Option<String>,
     pub stachelhaus_signatures: Option<String>,
     pub count: Option<usize>,
+    pub fungal: Option<bool>,
     pub skip_v3: Option<bool>,
     pub skip_v2: Option<bool>,
     pub skip_v1: Option<bool>,
@@ -215,6 +216,10 @@ impl From<ParsedConfig> for Config {
             config.skip_new_stachelhaus_output = skip_new_stach;
         }
 
+        if let Some(fungal) = item.fungal {
+            config.fungal = fungal;
+        }
+
         config
     }
 }
@@ -240,6 +245,8 @@ where
         }
         config.count = count_val;
     }
+
+    config.fungal = args.fungal;
 
     config.skip_v3 = args.skip_v3;
     config.skip_v2 = args.skip_v2;
