@@ -69,7 +69,12 @@ pub fn load_models(config: &Config) -> Result<Vec<SVMlightModel>, NrpsError> {
             .max_depth(1)
             .sort_by_file_name()
         {
-            let model_file = model_file_res?.path().to_path_buf();
+            let entry = model_file_res?;
+            // macOS AppleDouble sidecars are metadata, not SVM models.
+            if entry.file_name().to_string_lossy().starts_with("._") {
+                continue;
+            }
+            let model_file = entry.path().to_path_buf();
             if let Some(ext) = model_file.extension() {
                 if ext != "mdl" {
                     continue;
@@ -95,4 +100,33 @@ fn extract_name(filename: &Path) -> String {
         .unwrap()
         .trim_matches(square_brackets)
         .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn load_models_ignores_appledouble_sidecars() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root =
+            std::env::temp_dir().join(format!("nrps-models-{}-{unique}", std::process::id()));
+        let category = root.join("NRPS3_SINGLE_CLUSTER");
+        fs::create_dir_all(&category).unwrap();
+        let model = "SVM-light\n0\n0\n1\n0\n0\n0\n102\n0\n1\n0\n";
+        fs::write(category.join("cluster1.mdl"), model).unwrap();
+        fs::write(category.join("._cluster1.mdl"), b"\x00\x05\x16\x07").unwrap();
+        let mut config = Config::new();
+        config.set_model_dir(root.clone());
+        let result = load_models(&config);
+        fs::remove_dir_all(&root).unwrap();
+        let models = result.unwrap();
+        assert_eq!(models.len(), 1);
+        assert_eq!(models[0].name, "cluster1");
+    }
 }
